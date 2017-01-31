@@ -6,8 +6,7 @@ var trRoutes = require('./trroutes.js'),
   localIP = process.env.IP || '0.0.0.0',
   app = express(),
   accessCounts = {},
-  routeLog = [],
-  accessDetails = {}
+  routeLog = []
 
 app.route('/')
   .all(function(req, res, next) {
@@ -19,14 +18,18 @@ var tropoLog = function(req, res, next) {
     'Cache-Control': 'no-cache'
   })
   res.type('application/json')
-  accessCounts[req.method + req.path] = (accessCounts[req.method + req.path]) ? (accessCounts[req.method + req.path] + 1) : (1)
-  accessDetails = {
-    timestamp: new Date(),
-    query: req.query,
-    params: req.params,
-    body: req.body
+
+  accessCounts[req.method + req.path] = accessCounts[req.method + req.path] ? accessCounts[req.method + req.path] + 1 : 1;
+
+  var accessDetails = {
+    callId: (req.body.session ? req.body.session.callId : req.body.result.callId),
+    asrresult: (req.body.result ? {
+      name: req.body.result.actions.name,
+      value: req.body.result.actions.value
+    } : 'Root Node')
   }
-  routeLog.unshift(JSON.stringify(accessDetails, null, 2))
+
+  routeLog.unshift(JSON.stringify(accessDetails, null, 2));
   next()
 }
 
@@ -38,5 +41,5 @@ app.post('/api/tropo/pstn', jsonParser, tropoLog, trRoutes.root)
 app.post('/api/tropo/rootcontinue', jsonParser, tropoLog, trRoutes.rootcontinue)
 
 app.listen(localPort, localIP, function() {
-  console.log('App listening on ' + localIP + ":" + localPort)
+  console.log('Tropo App listening on ' + localIP + ":" + localPort)
 })
